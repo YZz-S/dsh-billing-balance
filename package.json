@@ -1,0 +1,24 @@
+{
+  "name": "dsh-billing-balance",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DeepSeek Harness (dsh) 模型余额插件：DeepSeek 官方 API 余额 + 火山方舟 Coding/Agent Plan 额度窗口（5小时/周/月）与重置倒计时显示。",
+  "license": "MIT",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "plugin",
+    "balance",
+    "billing",
+    "volcengine",
+    "coding-plan"
+  ],
+  "files": [
+    "host.js",
+    "client.js",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ]
+}
