@@ -51,18 +51,6 @@ dsh plugin --profile web add github:YZz-S/dsh-billing-balance
 
 安装后「设置 → 模型余额」「输入框下方读数条」「右下角悬浮刷新按钮」三处自动生效。
 动态用法（`cordis_define` 加载 `host.js` / `client.js`）仍保留，两种方式二选一。
-
-## 安装（dsh.bundle）
-
-本仓库同时是可安装的 dsh 插件包（`package.json` 声明 `dsh.bundle` + `dsh.client`）：
-
-```sh
-dsh plugin --profile web add github:YZz-S/dsh-billing-balance
-```
-
-安装后「设置 → 模型余额」「输入框下方读数条」「右下角悬浮刷新按钮」三处自动生效。
-动态用法（`cordis_define` 加载 `host.js` / `client.js`）仍保留，两种方式二选一。
-
 ## 快速开始
 
 前置条件：运行中的 DeepSeek Harness（支持动态 Cordis 插件；本插件在 DSH + Node.js v22 + Windows 上开发验证）。
