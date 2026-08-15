@@ -1,12 +1,30 @@
 {
   "name": "dsh-billing-balance",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0",
   "description": "DeepSeek Harness (dsh) 模型余额插件：DeepSeek 官方 API 余额 + 火山方舟 Coding/Agent Plan 额度窗口（5小时/周/月）与重置倒计时显示。",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "keywords": [
     "deepseek-harness",
     "dsh",
+    "dsh-plugin",
     "cordis",
     "plugin",
     "balance",
@@ -14,11 +32,18 @@
     "volcengine",
     "coding-plan"
   ],
-  "files": [
-    "host.js",
-    "client.js",
-    "README.md",
-    "SECURITY.md",
-    "LICENSE"
-  ]
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
 }

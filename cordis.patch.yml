@@ -1,0 +1,4 @@
+# dsh-billing-balance bundle patch: mounts the billing-balance row (host + browser halves).
+- insert:
+    - id: billing-balance
+      name: dsh-billing-balance
