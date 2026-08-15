@@ -2,6 +2,10 @@
 
 DeepSeek Harness（DSH）动态 Cordis 插件：在 Web GUI 中显示 **DeepSeek 官方 API 账户余额** 与 **火山方舟 Coding Plan / Agent Plan 套餐额度**（5小时/会话、每周、每月窗口的已用百分比与距下次额度重置的倒计时）。
 
+![余额设置效果图](./images/%E4%BD%99%E9%A2%9D%E8%AE%BE%E7%BD%AE%E6%95%88%E6%9E%9C%E5%9B%BE.png)
+
+![花费和余额显示效果图](./images/%E8%8A%B1%E8%B4%B9%E5%92%8C%E4%BD%99%E9%A2%9D%E6%98%BE%E7%A4%BA%E6%95%88%E6%9E%9C%E5%9B%BE.png)
+
 ## 功能特性
 
 - **DeepSeek 余额**：总余额 / 充值余额 / 赠送余额、账户可用状态（`GET https://api.deepseek.com/user/balance`）。

@@ -29,7 +29,7 @@
 - [x] 无遥测/埋点/外发统计
 - [x] 网络端点仅限两家官方 API
 - [x] 依赖仅为运行时平台（DeepSeek Harness 动态插件机制 + 本机 Node ≥ 18），无 npm 依赖
-- [ ] 发布前建议：在目标平台（Windows / Node 22 / DSH）复测 DeepSeek 余额与火山额度两条链路（火山需真实 AK/SK）
+- [x] 发布前建议：在目标平台（Windows / Node 22 / DSH）复测 DeepSeek 余额与火山额度两条链路（火山需真实 AK/SK）
 
 ## 报告问题
 
