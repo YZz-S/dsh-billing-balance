@@ -66,11 +66,16 @@ dsh plugin --profile web add github:YZz-S/dsh-billing-balance
 
 ## 目录结构
 
+> 两种用法共用同一套功能：可安装 bundle（`index.js` + `lib/client.js` + `cordis.patch.yml`）与动态 `cordis_define`（`host.js` / `client.js`）**二选一**，效果一致。
+
 | 文件 | 说明 |
 |---|---|
-| `host.js` | Host 半边：凭据读取、DeepSeek 余额 / 火山额度抓取（子进程 `node -e`）、私有 RPC |
-| `client.js` | Client 半边：设置页 / 读数条 / 悬浮刷新按钮三处 UI 与共享状态 |
-| `package.json` | 包元信息（不发布 npm，`private: true`） |
+| `index.js` | Host 半边（可安装 bundle 入口）：凭据读取、DeepSeek 余额 / 火山额度抓取（子进程 `node -e`）、私有 RPC |
+| `lib/client.js` | Client 半边（可安装 bundle 模块）：设置页 / 读数条 / 悬浮刷新按钮三处 UI 与共享状态 |
+| `cordis.patch.yml` | dsh bundle 补丁：注册 `dsh-billing-balance` 插件行 |
+| `package.json` | 包元信息，声明 `dsh.bundle` + `dsh.client`，可用 `dsh plugin add github:YZz-S/dsh-billing-balance` 安装 |
+| `host.js` / `client.js` | 动态 `cordis_define` 用法保留文件 |
+| `images/` | 效果截图 |
 | `README.md` | 本说明 |
 | `SECURITY.md` | 安全说明与开源发布检查清单 |
 | `LICENSE` | MIT 许可 |
