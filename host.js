@@ -8,7 +8,7 @@
  * 用法：将本文件内容作为 cordis_define 的 code.host 传入。
  */
 return {
-  inject: ['timer'],
+  inject: ['timer', 'fs', 'settings', 'subprocess', 'credentials', 'sandboxPolicy'],
   apply(ctx) {
     const fsSvc = ctx.get('fs')
     const settingsSvc = ctx.get('settings')
@@ -180,9 +180,21 @@ return {
         '  }',
         '  const result = (body && body.Result) || body || {}',
         '  const arr = Array.isArray(result.QuotaUsage) ? result.QuotaUsage : (Array.isArray(result.Usages) ? result.Usages : (Array.isArray(result.Details) ? result.Details : []))',
+        // Agent Plan 的 GetAFPUsage 返回 AFPDaily/AFPFiveHour/AFPWeekly/AFPMonthly 对象结构
+        // （不是 QuotaUsage[] 数组），把对象桶转成与 QuotaUsage 相同形状的 items。
+        '  const AFP_WINDOWS = [["AFPDaily", "daily"], ["AFPFiveHour", "5h"], ["AFPWeekly", "weekly"], ["AFPMonthly", "monthly"]]',
+        '  const afpItems = []',
+        '  for (let j = 0; j < AFP_WINDOWS.length; j++) {',
+        '    const key = AFP_WINDOWS[j][0], label = AFP_WINDOWS[j][1]',
+        '    const bucket = result[key]',
+        '    if (bucket && typeof bucket === "object") {',
+        '      afpItems.push({ Level: label, Percent: bucket.Quota ? ((bucket.Used || 0) / bucket.Quota) * 100 : 0, ResetTime: bucket.ResetTime, Used: bucket.Used, Total: bucket.Quota })',
+        '    }',
+        '  }',
+        '  const merged = arr.length ? arr : afpItems',
         '  const periods = []',
-        '  for (let i = 0; i < arr.length; i++) {',
-        '    const item = arr[i]',
+        '  for (let i = 0; i < merged.length; i++) {',
+        '    const item = merged[i]',
         '    const level = String(item.Level || item.Type || item.Period || item.Label || item.Window || "")',
         '    if (!level) continue',
         '    let pct = item.Percent',
