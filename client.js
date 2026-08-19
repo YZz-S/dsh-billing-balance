@@ -32,8 +32,8 @@ return {
       '.dshbal-float:active { cursor: grabbing; }',
     ].join('\n'))
 
-    const labelMap = { 'session': '5小时/会话', '5h': '5小时', 'five_hour': '5小时', 'weekly': '每周', 'week': '每周', 'monthly': '每月', 'month': '每月' }
-    const dockLabelMap = { 'session': '5h', '5h': '5h', 'five_hour': '5h', 'weekly': '周', 'week': '周', 'monthly': '月', 'month': '月' }
+    const labelMap = { 'session': '5小时/会话', 'daily': '每日', '5h': '5小时', 'five_hour': '5小时', 'weekly': '每周', 'week': '每周', 'monthly': '每月', 'month': '每月' }
+    const dockLabelMap = { 'session': '5h', 'daily': '日', '5h': '5h', 'five_hour': '5h', 'weekly': '周', 'week': '周', 'monthly': '月', 'month': '月' }
 
     const store = { status: null, listeners: [] }
     function setStore(s) {

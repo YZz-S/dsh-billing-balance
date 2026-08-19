@@ -10,7 +10,7 @@
 import { createHash, createHmac } from 'node:crypto'
 
 export const name = 'billing-balance'
-export const inject = ['webServer']
+export const inject = ['webServer', 'credentials', 'settings', 'fs']
 
 function sha256hex(s) {
   return createHash('sha256').update(s, 'utf8').digest('hex')
@@ -182,8 +182,27 @@ export function apply(ctx) {
     }
     const result = (body && body.Result) || body || {}
     const arr = Array.isArray(result.QuotaUsage) ? result.QuotaUsage : (Array.isArray(result.Usages) ? result.Usages : (Array.isArray(result.Details) ? result.Details : []))
+    // Agent Plan 的 GetAFPUsage 返回的是 AFPDaily/AFPFiveHour/AFPWeekly/AFPMonthly 对象结构
+    // （不是 QuotaUsage[] 数组），这里把对象桶转成与 QuotaUsage 相同形状的 items。
+    const AFP_WINDOWS = [
+      ['AFPDaily', 'daily'], ['AFPFiveHour', '5h'], ['AFPWeekly', 'weekly'], ['AFPMonthly', 'monthly'],
+    ]
+    const afpItems = []
+    for (const [key, label] of AFP_WINDOWS) {
+      const bucket = result[key]
+      if (bucket && typeof bucket === 'object') {
+        afpItems.push({
+          Level: label,
+          Percent: bucket.Quota ? ((bucket.Used || 0) / bucket.Quota) * 100 : 0,
+          ResetTime: bucket.ResetTime,
+          Used: bucket.Used,
+          Total: bucket.Quota,
+        })
+      }
+    }
+    const merged = arr.length ? arr : afpItems
     const periods = []
-    for (const item of arr) {
+    for (const item of merged) {
       const level = String(item.Level || item.Type || item.Period || item.Label || item.Window || '')
       if (!level) continue
       let pct = item.Percent
