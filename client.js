@@ -47,8 +47,14 @@ return {
     function loadCached() {
       host.call('get-status', {}).then(setStore).catch((e) => setStore({ error: String(e && e.message) }))
     }
+    // 三个 UI（设置页/读数条/悬浮按钮）挂载时都会触发刷新，这里在客户端合并成一次，
+    // 避免同一瞬间发多个 refresh（宿主虽有 inFlight 去重，但少发一次是一分稳）。
+    let refreshPromise = null
     function forceRefresh() {
-      return host.call('refresh', {}).then(setStore).catch((e) => setStore({ error: String(e && e.message) }))
+      if (refreshPromise !== null) return refreshPromise
+      refreshPromise = host.call('refresh', {}).then((s) => { setStore(s); return s }, (e) => { setStore({ error: String(e && e.message) }); return null })
+      refreshPromise.then(() => { refreshPromise = null }, () => { refreshPromise = null })
+      return refreshPromise
     }
 
     function fmtCountdown(ms) {
@@ -94,6 +100,7 @@ return {
         React.createElement('div', { className: 'dshbal-title' }, 'DeepSeek 官方 API'),
         rows.length ? rows : React.createElement('div', { className: 'dshbal-muted' }, '无余额数据'),
         React.createElement('div', { className: 'dshbal-muted', style: { marginTop: 6 } }, ds.isAvailable ? '✓ 账户可用' : '账户不可用'),
+        ds.stale && ds.error ? React.createElement('div', { className: 'dshbal-muted', style: { marginTop: 6 } }, '⚠ 刷新失败：' + ds.error + '（显示上次数据）') : null,
       )
     }
 
@@ -107,7 +114,8 @@ return {
       const head = React.createElement('div', { className: 'dshbal-title' }, '火山方舟 Coding Plan')
       const configured = (keys && keys.volc) || (volc && volc.keysPresent)
       const sections = []
-      if (volc.error) sections.push(React.createElement('div', { key: 'err', className: 'dshbal-err', style: { marginTop: 4 } }, volc.error))
+      if (volc.error && !volc.ok) sections.push(React.createElement('div', { key: 'err', className: 'dshbal-err', style: { marginTop: 4 } }, volc.error))
+      if (volc.stale && volc.error) sections.push(React.createElement('div', { key: 'stale', className: 'dshbal-muted', style: { marginTop: 4 } }, '⚠ 刷新失败：' + volc.error + '（显示上次数据）'))
       for (const plan of volc.plans || []) {
         if (plan.error) { sections.push(React.createElement('div', { key: plan.product, className: 'dshbal-err', style: { marginTop: 8 } }, plan.product + '：' + plan.error)); continue }
         if (!plan.periods || !plan.periods.length) continue
@@ -135,9 +143,11 @@ return {
         setMsg('')
         host.call('set-volc-keys', { ak: ak, sk: sk }).then((s) => {
           setStore(s)
-          const err = s && s.error
-          if (err) setMsg(err)
-          else { setMsg(ak ? '已保存并刷新 ✓' : '已清除并刷新 ✓'); setAk(''); setSk('') }
+          if (s && s.error) { setMsg(String(s.error)); return }
+          const staleWarn = s && s.volc && s.volc.stale && s.volc.error
+          setMsg(ak ? (staleWarn ? '已保存并刷新 ✓（额度查询暂失败，将自动重试）' : '已保存并刷新 ✓') : '已清除并刷新 ✓')
+          setAk('')
+          setSk('')
         }).catch((e) => setMsg(String(e && e.message))).finally(() => setBusy(false))
       }
       const clear = () => {
