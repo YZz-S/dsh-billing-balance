@@ -8,6 +8,10 @@
  * 用法：将本文件内容作为 cordis_define 的 code.host 传入。
  */
 return {
+  // 显式声明依赖：Cordis 按“服务可用才激活”调度，若不声明 credentials/settings/fs，
+  // 插件可能在它们就绪前被激活，导致 ctx.get('credentials') 为 undefined，
+  // 保存火山密钥时间歇性报「credentials 服务不可用」。
+  // sandboxPolicy / subprocess 由 PR #1 补充声明，保证 cwdHint 能读到真实 workspaceRoot。
   inject: ['timer', 'fs', 'settings', 'subprocess', 'credentials', 'sandboxPolicy'],
   apply(ctx) {
     const fsSvc = ctx.get('fs')
@@ -18,6 +22,8 @@ return {
 
     const cwdHint = sandboxPolicySvc !== undefined ? sandboxPolicySvc.workspaceRoot : 'C:\\'
     const state = { deepseek: null, volc: null, at: 0, keys: null }
+    // 最近一次成功抓取的数据：上游偶发失败时用它顶住页面，避免正确余额/额度被 500 清空
+    const lastGood = { deepseek: null, volc: null }
     let inFlight = null
     let nodeExe = ''
 
@@ -242,15 +248,55 @@ return {
       }
     }
 
+    // 对写凭据这类会偶发失败的 IO 做有限重试：只重试“快速失败”（如 Windows 上
+    // 文件被占用/杀软导致的 EPERM/EBUSY）；慢失败（如凭据文件跨进程锁等待超时）
+    // 重试也拿不到锁，直接上抛，避免把 30s 锁等待放大到 90s+。
+    async function withRetry(fn, tries, baseDelayMs) {
+      let lastErr
+      for (let i = 0; i < tries; i += 1) {
+        const started = Date.now()
+        try {
+          return await fn()
+        } catch (e) {
+          lastErr = e
+          const slow = Date.now() - started > 5000
+          if (i < tries - 1 && !slow) {
+            await new Promise((r) => setTimeout(r, baseDelayMs * (i + 1)))
+          }
+        }
+      }
+      throw lastErr
+    }
+
+    // 合并一次抓取结果：成功则记录为 lastGood；失败则尽量保留上次成功数据并标记 stale，
+    // 只有从未成功过（或没有可保留的数据）时才把错误结果放进 state。
+    function mergeState(key, fresh) {
+      if (fresh && fresh.ok) {
+        lastGood[key] = fresh
+        state[key] = fresh
+        return true
+      }
+      const keep = lastGood[key]
+      if (keep) {
+        const merged = { ...keep, stale: true, error: fresh && fresh.error ? fresh.error : '' }
+        if (key === 'volc' && fresh && typeof fresh.keysPresent === 'boolean') merged.keysPresent = fresh.keysPresent
+        state[key] = merged
+      } else {
+        state[key] = fresh
+      }
+      return false
+    }
+
     async function refresh() {
       if (inFlight !== null) return inFlight
       inFlight = (async () => {
         const creds = await readCredentials()
         state.keys = { deepseek: !!creds.deepseekKey, volc: !!(creds.volcAk && creds.volcSk) }
         const results = await Promise.all([fetchDeepSeek(creds), fetchVolc(creds)])
-        state.deepseek = results[0]
-        state.volc = results[1]
-        state.at = Math.max(results[0].at || 0, results[1].at || 0, 0)
+        const okDeep = mergeState('deepseek', results[0])
+        const okVolc = mergeState('volc', results[1])
+        const freshAt = Math.max(okDeep ? (results[0].at || 0) : 0, okVolc ? (results[1].at || 0) : 0)
+        if (freshAt > 0) state.at = freshAt
         return snapshot()
       })().catch((e) => {
         return { error: '刷新失败: ' + String(e && e.message) }
@@ -271,13 +317,14 @@ return {
       if ((ak && !sk) || (!ak && sk)) return { ok: false, error: 'AK 与 SK 需要同时填写或同时留空' }
       try {
         if (ak && sk) {
-          await credSvc.set('VOLC_ACCESS_KEY', ak)
-          await credSvc.set('VOLC_SECRET_KEY', sk)
+          await withRetry(() => credSvc.set('VOLC_ACCESS_KEY', ak), 3, 250)
+          await withRetry(() => credSvc.set('VOLC_SECRET_KEY', sk), 3, 250)
         } else {
-          await credSvc.unset('VOLC_ACCESS_KEY')
-          await credSvc.unset('VOLC_SECRET_KEY')
+          await withRetry(() => credSvc.unset('VOLC_ACCESS_KEY'), 3, 250)
+          await withRetry(() => credSvc.unset('VOLC_SECRET_KEY'), 3, 250)
         }
       } catch (e) {
+        ctx.logger.warn('billing-balance: 保存火山密钥失败: ' + String(e && e.message))
         return { ok: false, error: '保存失败: ' + String(e && e.message) }
       }
       await refresh()
