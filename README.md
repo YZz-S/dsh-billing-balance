@@ -17,7 +17,7 @@
 ### Features
 
 - **DeepSeek balance**: total / top-up / gift balance and account availability (`GET https://api.deepseek.com/user/balance`).
-- **Volcengine Ark Coding Plan**: used percentage, progress bar and countdown to reset (ticking every second) for the `session` (5-hour) / `weekly` / `monthly` windows; if you also subscribe to Agent Plan (5h/week/month windows), it is shown as well.
+- **Volcengine Ark Coding Plan**: used percentage, progress bar and countdown to reset (ticking every second) for the `session` (5-hour) / `weekly` / `monthly` windows; if you also subscribe to Agent Plan (5h/week/month windows), it is shown as well (Agent Plan also exposes a daily window).
 - **Three display spots + linkage**:
   1. Settings → "Model Balance" page: full panel + manual refresh button + Volcengine AK/SK configuration area;
   2. Readout line below the conversation input box: a persistent one-line summary, auto-refreshing every 30 seconds;
@@ -143,7 +143,7 @@ DeepSeek Harness（DSH）动态 Cordis 插件：在 Web GUI 中显示 **DeepSeek
 ### 功能特性
 
 - **DeepSeek 余额**：总余额 / 充值余额 / 赠送余额、账户可用状态（`GET https://api.deepseek.com/user/balance`）。
-- **火山方舟 Coding Plan**：`session`（5小时）/ `weekly` / `monthly` 三个窗口的已用百分比、进度条、距重置倒计时（秒级跳动）；若同时订阅 Agent Plan（5h/周/月窗口），一并显示。
+- **火山方舟 Coding Plan**：`session`（5小时）/ `weekly` / `monthly` 三个窗口的已用百分比、进度条、距重置倒计时（秒级跳动）；若同时订阅 Agent Plan（5h/周/月窗口），一并显示（Agent Plan 另含每日窗口）。
 - **三处展示 + 联动**：
   1. 设置 → 「模型余额」页面：完整面板 + 手动刷新按钮 + 火山 AK/SK 配置区；
   2. 对话输入框下方读数条：常驻一行摘要，自动每 30 秒刷新；
